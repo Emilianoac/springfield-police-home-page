@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "prettier": "^3.8.2",
-    "vue": "^3.2.47"
+    "vue": "^3.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.0.0",
