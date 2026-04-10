@@ -17,6 +17,8 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
 
   let revealTimer: ReturnType<typeof setTimeout> | null = null;
   let offersTimer: ReturnType<typeof setTimeout> | null = null;
+  let optionNoEndedHandler: (() => void) | null = null;
+  let optionYesEndedHandler: (() => void) | null = null;
 
   const welcomeSrc = ref("");
   const optionsNoSrc = ref("");
@@ -37,12 +39,27 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
     }
   }
 
+  function clearOptionEndedListeners() {
+    if (optionNoAudio.value && optionNoEndedHandler) {
+      optionNoAudio.value.removeEventListener("ended", optionNoEndedHandler);
+    }
+
+    if (optionYesAudio.value && optionYesEndedHandler) {
+      optionYesAudio.value.removeEventListener("ended", optionYesEndedHandler);
+    }
+
+    optionNoEndedHandler = null;
+    optionYesEndedHandler = null;
+  }
+
   async function handleInit(lang: string) {
     clearPendingTimers();
+    clearOptionEndedListeners();
     welcomeModal.value = false;
     userOption.value = "";
     showOffers.value = false;
     showPatrol.value = false;
+    showPanel.value = false;
     isChoiceLocked.value = false;
 
     welcomeSrc.value = lang == "en" ? "./audio/en/welcome.mp3" : "./audio/es/welcome.mp3";
@@ -66,8 +83,10 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
     }
 
     clearPendingTimers();
+    clearOptionEndedListeners();
     isChoiceLocked.value = true;
     showPatrol.value = false;
+    showPanel.value = false;
 
     if (value == "no") {
       pauseVoice(welcomeAudio.value);
@@ -80,11 +99,12 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
       playVoice(optionNoAudio.value);
 
       if (optionNoAudio.value) {
-        optionNoAudio.value.addEventListener(
-          "ended",
-          () => { showPanel.value = true; },
-          { once: true }
-        );
+        optionNoEndedHandler = () => {
+          showPanel.value = true;
+          optionNoEndedHandler = null;
+        };
+
+        optionNoAudio.value.addEventListener("ended", optionNoEndedHandler, { once: true });
       }
 
       revealTimer = setTimeout(() => {
@@ -105,11 +125,12 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
       playVoice(optionYesAudio.value);
 
       if (optionYesAudio.value) {
-        optionYesAudio.value.addEventListener(
-          "ended",
-          () => { showPanel.value = true; },
-          { once: true }
-        );
+        optionYesEndedHandler = () => {
+          showPanel.value = true;
+          optionYesEndedHandler = null;
+        };
+
+        optionYesAudio.value.addEventListener("ended", optionYesEndedHandler, { once: true });
       }
 
       revealTimer = setTimeout(() => {
@@ -124,10 +145,12 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
 
   onBeforeUnmount(() => {
     clearPendingTimers();
+    clearOptionEndedListeners();
   });
 
   function handleReplay() {
     clearPendingTimers();
+    clearOptionEndedListeners();
     welcomeModal.value = true;
     userOption.value = "";
     showOffers.value = false;

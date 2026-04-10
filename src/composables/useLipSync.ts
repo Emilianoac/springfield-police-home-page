@@ -8,7 +8,16 @@ export default function useLipSync() {
   let audioSource: MediaElementAudioSourceNode | null = null;
   let rafId: number | null = null;
   let activeAudio: HTMLAudioElement | null = null;
+  let activeAudioEndedHandler: (() => void) | null = null;
   const mediaSources = new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>();
+
+  function detachActiveAudioEndedHandler() {
+    if (activeAudio && activeAudioEndedHandler) {
+      activeAudio.removeEventListener("ended", activeAudioEndedHandler);
+    }
+
+    activeAudioEndedHandler = null;
+  }
 
   function stopLipSync() {
     if (rafId) {
@@ -83,11 +92,22 @@ export default function useLipSync() {
       return;
     }
 
+    detachActiveAudioEndedHandler();
+
     activeAudio = audio;
+    activeAudioEndedHandler = () => {
+      stopLipSync();
+      activeAudio = null;
+      activeAudioEndedHandler = null;
+    };
+    activeAudio.addEventListener("ended", activeAudioEndedHandler, { once: true });
+
     startLipSync(audio);
 
     audio.play().catch(() => {
       stopLipSync();
+      detachActiveAudioEndedHandler();
+      activeAudio = null;
     });
   }
 
@@ -100,12 +120,15 @@ export default function useLipSync() {
 
     if (audio === activeAudio) {
       stopLipSync();
+      detachActiveAudioEndedHandler();
       activeAudio = null;
     }
   }
 
   onBeforeUnmount(() => {
     stopLipSync();
+    detachActiveAudioEndedHandler();
+    activeAudio = null;
 
     if (audioContext) {
       audioContext.close();
