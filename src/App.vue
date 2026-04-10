@@ -2,12 +2,13 @@
 import { ref } from "vue";
 import useWelcomeFlow from "./composables/useWelcomeFlow";
 import ClancyOffers from "./components/ClancyOffers.vue";
+import ClancyHead from "./components/ClancyHead.vue";
 
 const welcomeAudio = ref<HTMLAudioElement | null>(null);
 const optionNoAudio = ref<HTMLAudioElement | null>(null);
 const optionYesAudio = ref<HTMLAudioElement | null>(null);
 
-const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, handleInit } =
+const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, talkLevel, handleInit } =
   useWelcomeFlow({
     welcomeAudio,
     optionNoAudio: optionNoAudio,
@@ -39,7 +40,7 @@ const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, handle
       <div>
         <template v-if="!showOffers">
           <h1 class="page__title">Springfield Police Department</h1>
-          <img class="clancy-img" src="./assets/images/clancy.svg" />
+          <ClancyHead :talk-level="talkLevel" />
 
           <div class="page__options">
             <input
@@ -68,10 +69,10 @@ const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, handle
             />
           </div>
         </template>
-        <template v-else>
-          <ClancyOffers />
+        <div v-show="showOffers">
+          <ClancyOffers :talk-level="talkLevel" />
           <p class="offer-text">NOW 80% OFF</p>
-        </template>
+        </div>
       </div>
     </div>
 

@@ -1,4 +1,5 @@
 import { ref, watch, nextTick, onBeforeUnmount, type Ref } from "vue";
+import useLipSync from "./useLipSync";
 
 interface WelcomeFlowProps {
   welcomeAudio: Ref<HTMLAudioElement | null>;
@@ -21,6 +22,7 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
   const optionsYesSrc = ref("");
 
   const { welcomeAudio, optionNoAudio, optionYesAudio } = props;
+  const { talkLevel, playVoice, pauseVoice } = useLipSync();
 
   function clearPendingTimers() {
     if (revealTimer) {
@@ -53,15 +55,11 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
       optionNoAudio.value.src = optionsNoSrc.value;
       optionYesAudio.value.src = optionsYesSrc.value;
 
-      try {
-        await welcomeAudio.value.play();
-      } catch (error) {
-        console.error("Error playing welcome audio:", error);
-      }
+      playVoice(welcomeAudio.value);
     }
   }
 
-  watch(userOption, async (value) => {
+  watch(userOption, (value) => {
     if (value !== "no" && value !== "yes") {
       return;
     }
@@ -71,18 +69,14 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
     showPatrol.value = false;
 
     if (value == "no") {
-      welcomeAudio.value?.pause();
-      optionYesAudio.value?.pause();
+      pauseVoice(welcomeAudio.value);
+      pauseVoice(optionYesAudio.value);
 
       if (optionYesAudio.value) {
         optionYesAudio.value.currentTime = 0;
       }
 
-      try {
-        await optionNoAudio.value?.play();
-      } catch (error) {
-        console.error("Error playing 'No' audio:", error);
-      }
+      playVoice(optionNoAudio.value);
 
       revealTimer = setTimeout(() => {
         showPatrol.value = true;
@@ -92,18 +86,14 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
         }, 2500);
       }, 5000);
     } else {
-      welcomeAudio.value?.pause();
-      optionNoAudio.value?.pause();
+      pauseVoice(welcomeAudio.value);
+      pauseVoice(optionNoAudio.value);
 
       if (optionNoAudio.value) {
         optionNoAudio.value.currentTime = 0;
       }
 
-      try {
-        await optionYesAudio.value?.play();
-      } catch (error) {
-        console.error("Error playing 'Yes' audio:", error);
-      }
+      playVoice(optionYesAudio.value);
 
       revealTimer = setTimeout(() => {
         showPatrol.value = true;
@@ -125,6 +115,7 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
     showOffers,
     showPatrol,
     isChoiceLocked,
+    talkLevel,
 
     handleInit,
   };
