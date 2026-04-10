@@ -1,0 +1,131 @@
+import { ref, watch, nextTick, onBeforeUnmount, type Ref } from "vue";
+
+interface WelcomeFlowProps {
+  welcomeAudio: Ref<HTMLAudioElement | null>;
+  optionNoAudio: Ref<HTMLAudioElement | null>;
+  optionYesAudio: Ref<HTMLAudioElement | null>;
+}
+
+export default function useWelcomeFlow(props: WelcomeFlowProps) {
+  let welcomeModal = ref(true);
+  let userOption = ref("");
+  let showOffers = ref(false);
+  let showPatrol = ref(false);
+  let isChoiceLocked = ref(false);
+
+  let revealTimer: ReturnType<typeof setTimeout> | null = null;
+  let offersTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const welcomeSrc = ref("");
+  const optionsNoSrc = ref("");
+  const optionsYesSrc = ref("");
+
+  const { welcomeAudio, optionNoAudio, optionYesAudio } = props;
+
+  function clearPendingTimers() {
+    if (revealTimer) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+    }
+
+    if (offersTimer) {
+      clearTimeout(offersTimer);
+      offersTimer = null;
+    }
+  }
+
+  async function handleInit(lang: string) {
+    clearPendingTimers();
+    welcomeModal.value = false;
+    userOption.value = "";
+    showOffers.value = false;
+    showPatrol.value = false;
+    isChoiceLocked.value = false;
+
+    welcomeSrc.value = lang == "en" ? "./audio/en/welcome.mp3" : "./audio/es/welcome.mp3";
+    optionsNoSrc.value = lang == "en" ? "./audio/en/no.mp3" : "./audio/es/no.mp3";
+    optionsYesSrc.value = lang == "en" ? "./audio/en/yes.mp3" : "./audio/es/yes.mp3";
+
+    await nextTick();
+
+    if (welcomeAudio.value && optionNoAudio.value && optionYesAudio.value) {
+      welcomeAudio.value.src = welcomeSrc.value;
+      optionNoAudio.value.src = optionsNoSrc.value;
+      optionYesAudio.value.src = optionsYesSrc.value;
+
+      try {
+        await welcomeAudio.value.play();
+      } catch (error) {
+        console.error("Error playing welcome audio:", error);
+      }
+    }
+  }
+
+  watch(userOption, async (value) => {
+    if (value !== "no" && value !== "yes") {
+      return;
+    }
+
+    clearPendingTimers();
+    isChoiceLocked.value = true;
+    showPatrol.value = false;
+
+    if (value == "no") {
+      welcomeAudio.value?.pause();
+      optionYesAudio.value?.pause();
+
+      if (optionYesAudio.value) {
+        optionYesAudio.value.currentTime = 0;
+      }
+
+      try {
+        await optionNoAudio.value?.play();
+      } catch (error) {
+        console.error("Error playing 'No' audio:", error);
+      }
+
+      revealTimer = setTimeout(() => {
+        showPatrol.value = true;
+
+        offersTimer = setTimeout(() => {
+          showOffers.value = true;
+        }, 2500);
+      }, 5000);
+    } else {
+      welcomeAudio.value?.pause();
+      optionNoAudio.value?.pause();
+
+      if (optionNoAudio.value) {
+        optionNoAudio.value.currentTime = 0;
+      }
+
+      try {
+        await optionYesAudio.value?.play();
+      } catch (error) {
+        console.error("Error playing 'Yes' audio:", error);
+      }
+
+      revealTimer = setTimeout(() => {
+        showPatrol.value = true;
+
+        offersTimer = setTimeout(() => {
+          showOffers.value = true;
+        }, 2500);
+      }, 3500);
+    }
+  });
+
+  onBeforeUnmount(() => {
+    clearPendingTimers();
+  });
+
+  return {
+    welcomeModal,
+    userOption,
+    showOffers,
+    showPatrol,
+    isChoiceLocked,
+
+    handleInit,
+  };
+}

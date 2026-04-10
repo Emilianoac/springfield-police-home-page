@@ -1,8 +1,18 @@
-<script setup>
+<script setup lang="ts">
+import { ref } from "vue";
 import useWelcomeFlow from "./composables/useWelcomeFlow";
 import ClancyOffers from "./components/icons/ClancyOffers.vue";
 
-const { welcomeModal, userOption, showOffers, handleInit } = useWelcomeFlow();
+const welcomeAudio = ref<HTMLAudioElement | null>(null);
+const optionNoAudio = ref<HTMLAudioElement | null>(null);
+const optionYesAudio = ref<HTMLAudioElement | null>(null);
+
+const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, handleInit } =
+  useWelcomeFlow({
+    welcomeAudio,
+    optionNoAudio: optionNoAudio,
+    optionYesAudio: optionYesAudio,
+  });
 </script>
 
 <template>
@@ -32,12 +42,30 @@ const { welcomeModal, userOption, showOffers, handleInit } = useWelcomeFlow();
           <img class="clancy-img" src="./assets/images/clancy.svg" />
 
           <div class="page__options">
-            <input type="radio" name="select" value="yes" v-model="userOption" id="yes" />
+            <input
+              type="radio"
+              name="select"
+              value="yes"
+              v-model="userOption"
+              id="yes"
+              :disabled="isChoiceLocked && userOption === 'no'"
+            />
             <label for="yes">Yes</label>
 
-            <input type="radio" name="select" value="no" v-model="userOption" id="no" />
+            <input
+              type="radio"
+              name="select"
+              value="no"
+              v-model="userOption"
+              id="no"
+              :disabled="isChoiceLocked && userOption === 'yes'"
+            />
             <label for="no">No</label>
-            <img class="patrol-img" src="./assets/images/patrol.svg" />
+            <img
+              class="patrol-img"
+              :class="{ 'is-visible': showPatrol }"
+              src="./assets/images/patrol.svg"
+            />
           </div>
         </template>
         <template v-else>
@@ -73,6 +101,10 @@ const { welcomeModal, userOption, showOffers, handleInit } = useWelcomeFlow();
       </div>
     </div>
   </div>
+
+  <audio ref="welcomeAudio"></audio>
+  <audio ref="optionNoAudio"></audio>
+  <audio ref="optionYesAudio"></audio>
 </template>
 
 <style lang="scss">
@@ -244,6 +276,10 @@ body {
       bottom: 25px;
       right: 25px;
       animation: show 0.9s ease-in-out infinite;
+
+      &.is-visible {
+        display: block;
+      }
     }
 
     .offer-text {
