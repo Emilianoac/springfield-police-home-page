@@ -8,12 +8,21 @@ const welcomeAudio = ref<HTMLAudioElement | null>(null);
 const optionNoAudio = ref<HTMLAudioElement | null>(null);
 const optionYesAudio = ref<HTMLAudioElement | null>(null);
 
-const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, talkLevel, handleInit } =
-  useWelcomeFlow({
-    welcomeAudio,
-    optionNoAudio: optionNoAudio,
-    optionYesAudio: optionYesAudio,
-  });
+const {
+  welcomeModal,
+  userOption,
+  showOffers,
+  showPatrol,
+  showPanel,
+  isChoiceLocked,
+  talkLevel,
+  handleInit,
+  handleReplay,
+} = useWelcomeFlow({
+  welcomeAudio,
+  optionNoAudio: optionNoAudio,
+  optionYesAudio: optionYesAudio,
+});
 </script>
 
 <template>
@@ -85,7 +94,7 @@ const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, talkLe
   </main>
 
   <!-- WELCOME MODAL -->
-  <div class="welcome-modal" v-if="welcomeModal">
+  <div class="modal" v-if="welcomeModal">
     <div class="modal__content">
       <div class="modal__header">
         <h5>Springfield Police Home Page</h5>
@@ -97,8 +106,27 @@ const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, talkLe
         </p>
       </div>
       <div class="modal__footer">
-        <button @click.prevent="handleInit('en')">English</button>
-        <button @click.prevent="handleInit('es')">Spanish</button>
+        <button class="button" @click.prevent="handleInit('en')">English</button>
+        <button class="button" @click.prevent="handleInit('es')">Spanish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPLAY PANEL -->
+  <div class="modal" v-show="showPanel">
+    <div class="modal__content">
+      <div class="modal__footer">
+        <button class="button" @click.prevent="handleReplay" title="Play again">▶ Replay</button>
+        <a
+          class="button link-button"
+          href="https://github.com/Emilianoac/springfield-police-home-page"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View source code on GitHub"
+        >
+          <img src="/images/icons/github.svg" alt="GitHub" class="github-btn-icon" />
+          GitHub
+        </a>
       </div>
     </div>
   </div>
@@ -116,9 +144,15 @@ const { welcomeModal, userOption, showOffers, showPatrol, isChoiceLocked, talkLe
   margin: 0;
 }
 
+html {
+  overflow: hidden;
+}
+
 body {
   min-height: 100vh;
   background: #948ebd;
+  font-size: 16px;
+  overflow: hidden;
   font-family:
     Inter,
     -apple-system,
@@ -132,8 +166,6 @@ body {
     "Droid Sans",
     "Helvetica Neue",
     sans-serif;
-  font-size: 16px;
-  overflow: hidden;
 }
 
 .page-container {
@@ -354,7 +386,7 @@ body {
   }
 }
 
-.welcome-modal {
+.modal {
   position: absolute;
   top: 0;
   left: 0;
@@ -404,27 +436,34 @@ body {
     }
 
     .modal__footer {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.4em;
 
-      button {
+      .button {
         cursor: pointer;
         border: 1px solid black;
         background: white;
+        width: 100%;
+        padding: 0.4em;
 
-        &:first-of-type {
-          margin-right: 0.4em;
+        &:hover {
+          opacity: 0.7;
         }
       }
-    }
 
-    img {
-      max-width: 30px;
-    }
+      .link-button {
+        text-decoration: none;
+        color: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5em;
 
-    button {
-      border: 1px solid black;
-      width: 100%;
-      padding: 0.4em;
+        img {
+          width: 15px;
+        }
+      }
     }
   }
 }
@@ -487,7 +526,7 @@ body {
     }
   }
 
-  .welcome-modal {
+  .modal {
     .modal__content {
       padding: 1em;
 
@@ -499,6 +538,11 @@ body {
           margin-bottom: 0.5em;
           display: block;
         }
+      }
+
+      .modal__footer {
+        display: flex;
+        flex-direction: column;
       }
     }
   }

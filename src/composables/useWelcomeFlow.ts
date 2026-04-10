@@ -12,6 +12,7 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
   let userOption = ref("");
   let showOffers = ref(false);
   let showPatrol = ref(false);
+  let showPanel = ref(false);
   let isChoiceLocked = ref(false);
 
   let revealTimer: ReturnType<typeof setTimeout> | null = null;
@@ -78,6 +79,14 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
 
       playVoice(optionNoAudio.value);
 
+      if (optionNoAudio.value) {
+        optionNoAudio.value.addEventListener(
+          "ended",
+          () => { showPanel.value = true; },
+          { once: true }
+        );
+      }
+
       revealTimer = setTimeout(() => {
         showPatrol.value = true;
 
@@ -95,6 +104,14 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
 
       playVoice(optionYesAudio.value);
 
+      if (optionYesAudio.value) {
+        optionYesAudio.value.addEventListener(
+          "ended",
+          () => { showPanel.value = true; },
+          { once: true }
+        );
+      }
+
       revealTimer = setTimeout(() => {
         showPatrol.value = true;
 
@@ -109,14 +126,39 @@ export default function useWelcomeFlow(props: WelcomeFlowProps) {
     clearPendingTimers();
   });
 
+  function handleReplay() {
+    clearPendingTimers();
+    welcomeModal.value = true;
+    userOption.value = "";
+    showOffers.value = false;
+    showPatrol.value = false;
+    showPanel.value = false;
+    isChoiceLocked.value = false;
+
+    if (welcomeAudio.value) {
+      pauseVoice(welcomeAudio.value);
+      welcomeAudio.value.currentTime = 0;
+    }
+    if (optionNoAudio.value) {
+      pauseVoice(optionNoAudio.value);
+      optionNoAudio.value.currentTime = 0;
+    }
+    if (optionYesAudio.value) {
+      pauseVoice(optionYesAudio.value);
+      optionYesAudio.value.currentTime = 0;
+    }
+  }
+
   return {
     welcomeModal,
     userOption,
     showOffers,
     showPatrol,
+    showPanel,
     isChoiceLocked,
     talkLevel,
 
     handleInit,
+    handleReplay,
   };
 }
