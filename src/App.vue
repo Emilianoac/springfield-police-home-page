@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import useWelcomeFlow from "./composables/useWelcomeFlow";
-import ClancyOffers from "./components/icons/ClancyOffers.vue";
+import ClancyOffers from "./components/ClancyOffers.vue";
 
 const welcomeAudio = ref<HTMLAudioElement | null>(null);
 const optionNoAudio = ref<HTMLAudioElement | null>(null);
